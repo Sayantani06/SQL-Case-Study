@@ -50,4 +50,41 @@ group by sales.customer_id,menu.product_name)
 temp)
 Select customer_id, product_name from final_table where most_ordered=1 ;
 
+Question 6: Which item was purchased first by the customer after they became a member?
+
+With CTE as
+(Select sales.customer_id, menu.product_name, dense_rank() over(partition by sales.customer_id order by sales.order_date) as ranking
+ from sales inner join members on sales.customer_id= members.customer_id inner join menu on sales.product_id=menu.product_id 
+where sales.order_date> members.join_date)
+Select customer_id, product_name from CTE where ranking=1;
+
+Question 7: Which item was purchased just before the customer became a member?
+
+With CTE as
+(Select sales.customer_id, menu.product_name, dense_rank() over(partition by sales.customer_id order by sales.order_date) as ranking
+ from sales inner join members on sales.customer_id= members.customer_id inner join menu on sales.product_id=menu.product_id 
+where sales.order_date< members.join_date)
+Select customer_id, product_name from CTE where ranking=1;
+
+Question 8: What is the total items and amount spent for each member before they became a member?
+
+Select sales.customer_id, sum(menu.price) As total_expenditure,count(sales.product_id) as no_of_order
+ from sales inner join members on sales.customer_id= members.customer_id inner join menu on sales.product_id=menu.product_id 
+where sales.order_date< members.join_date
+group by sales.customer_id order by sales.customer_id ;
+
+Question 9 : If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+
+Select customer_id, sum(points) from
+(Select sales.customer_id, 
+case when menu.product_name ="sushi" then (menu.price)*10*2
+else menu.price*10
+end as Points 
+from sales join menu on sales.product_id=menu.product_id) temp group by customer_id;
+
+Question 10: In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+
+
+
+
 
