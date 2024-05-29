@@ -84,6 +84,47 @@ from sales join menu on sales.product_id=menu.product_id) temp group by customer
 
 Question 10: In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
 
+Select customer_id, sum(points) from
+(Select sales.customer_id,menu.price,sales.order_date,
+case 
+when sales.order_date between members.join_date and members.join_date+7 then (menu.price)*10*2 
+when menu.product_name='sushi' then (menu.price)*10*2
+else (menu.price)*10
+end as points
+from sales join members on sales.customer_id= members.customer_id
+inner join menu on  sales.product_id=menu.product_id
+where order_date < '2021-02-01')
+temp group by customer_id
+order by customer_id;
+
+
+BONUS Question: Join All The Things
+
+Select sales.customer_id,sales.order_date, menu.product_name, menu.price,
+case when sales.order_date< members.join_date then 'N'
+when sales.order_date >= members.join_date then 'Y'
+else 'NULL'
+end as member
+from sales left join members on sales.customer_id= members.customer_id
+join menu on sales.product_id= menu.product_id;
+
+BONUS Question:Danny also requires further information about the ranking of customer products,
+but he purposely does not need the ranking for non-member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty program.
+
+With CTE as
+(Select sales.customer_id,sales.order_date, menu.product_name, menu.price,
+case when sales.order_date< members.join_date then 'N'
+when sales.order_date >= members.join_date then 'Y'
+else 'NULL'
+end as member
+from sales left join members on sales.customer_id= members.customer_id
+join menu on sales.product_id= menu.product_id) 
+Select * , 
+case when member ='Y' then row_number() over(partition by customer_id,member) 
+when member='N' then 'null'
+else 'null'
+end as ranking
+from CTE;
 
 
 
